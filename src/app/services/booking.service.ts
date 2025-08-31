@@ -97,10 +97,17 @@ export class BookingService {
    */
   async getUserBookings(): Promise<Booking[]> {
     try {
-      const headers = this.authService.getAuthHeader();
+     const headers = new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': localStorage.getItem('authToken') || '',
+      });
       
       const response = await firstValueFrom(
-        this.http.get<Booking[]>(`${this.API_URL}/user`, { headers ,   responseType: 'json' as const})
+        this.http.get<Booking[]>(`http://localhost:8080/api/bookings/user_bookings`, { 
+          headers,
+          responseType: 'json' as const
+        })
       );
       
       console.log('User bookings retrieved:', response);

@@ -1,5 +1,6 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
+import { BookingService } from '../../services/booking.service';
 import { FormsModule } from '@angular/forms';
 
 interface UserBooking {
@@ -245,38 +246,79 @@ export class PreviousBookingsComponent implements OnInit {
   selectedStatus = signal('');
   selectedDate = signal('');
 
-  constructor(private authService: AuthService) {}
+  private readonly API_URL = 'http://localhost:8080/api/booking';
+
+  constructor(private authService: AuthService, private bookingService: BookingService) {}
 
   ngOnInit() {
     this.loadBookings();
   }
 
-  loadBookings() {
+  async loadBookings() {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
     try {
-      // Get current user data from localStorage (which includes bookings)
-      const currentUser = this.authService.getCurrentUser();
+      // Check if user is logged in
+      if (!this.authService.isLoggedIn()) {
+        this.errorMessage.set('Please log in to view your bookings.');
+        this.previousBookings.set([]);
+        this.filteredBookings.set([]);
+        return;
+      }
+
+      console.log('Fetching bookings from API...');
       
-      if (currentUser && (currentUser as any).bookings) {
-        // User has bookings array in their data
-        const userBookings = (currentUser as any).bookings as UserBooking[];
+      // Fetch bookings using the booking service
+      const response = await this.bookingService.getUserBookings();
+
+      console.log('API Response:', response);
+
+      if (response && Array.isArray(response)) {
+        // Convert the response to UserBooking format if needed
+        const userBookings = response as any as UserBooking[];
         this.previousBookings.set(userBookings);
         this.filteredBookings.set(userBookings);
-        console.log('Loaded user bookings:', userBookings);
+        console.log('Loaded bookings from API:', userBookings);
       } else {
-        // Fallback: check old userBookings key for backward compatibility
-        const fallbackBookings = JSON.parse(localStorage.getItem('userBookings') || '[]');
-        this.previousBookings.set(fallbackBookings);
-        this.filteredBookings.set(fallbackBookings);
-        console.log('Loaded fallback bookings:', fallbackBookings);
+        console.warn('Invalid response format:', response);
+        this.errorMessage.set('Invalid response format from server.');
+        this.previousBookings.set([]);
+        this.filteredBookings.set([]);
       }
-    } catch (error) {
-      console.error('Error loading bookings:', error);
-      this.errorMessage.set('Failed to load bookings. Please try again.');
-      this.previousBookings.set([]);
-      this.filteredBookings.set([]);
+
+    } catch (error: any) {
+      console.error('Error loading bookings from API:', error);
+      
+      // Handle different types of errors
+      if (error.message?.includes('401')) {
+        this.errorMessage.set('Authentication failed. Please log in again.');
+      } else if (error.message?.includes('403')) {
+        this.errorMessage.set('Access denied. You do not have permission to view bookings.');
+      } else if (error.message?.includes('0') || error.message?.includes('network')) {
+        this.errorMessage.set('Cannot connect to server. Please check if the backend is running.');
+      } else {
+        this.errorMessage.set(`Failed to load bookings: ${error.message || 'Unknown error'}`);
+      }
+      
+      // Fallback: try to load from localStorage as backup
+      try {
+        const currentUser = this.authService.getCurrentUser();
+        if (currentUser && (currentUser as any).bookings) {
+          const userBookings = (currentUser as any).bookings as UserBooking[];
+          this.previousBookings.set(userBookings);
+          this.filteredBookings.set(userBookings);
+          console.log('Loaded fallback bookings from localStorage:', userBookings);
+          this.errorMessage.set('Loaded cached bookings (server unavailable)');
+        } else {
+          this.previousBookings.set([]);
+          this.filteredBookings.set([]);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback loading failed:', fallbackError);
+        this.previousBookings.set([]);
+        this.filteredBookings.set([]);
+      }
     } finally {
       this.isLoading.set(false);
     }
