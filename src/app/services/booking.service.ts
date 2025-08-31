@@ -100,7 +100,7 @@ export class BookingService {
       const headers = this.authService.getAuthHeader();
       
       const response = await firstValueFrom(
-        this.http.get<Booking[]>(`${this.API_URL}/user`, { headers })
+        this.http.get<Booking[]>(`${this.API_URL}/user`, { headers ,   responseType: 'json' as const})
       );
       
       console.log('User bookings retrieved:', response);
@@ -129,7 +129,30 @@ export class BookingService {
       throw this.handleError(error);
     }
   }
-
+  /**
+   * Get booking by ID
+   */
+  async getBookingStatusById(bookingId: number): Promise<Booking> {
+    try {
+     const headers = new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': localStorage.getItem('authToken') || '',
+      });
+      
+      const response = await firstValueFrom(
+        this.http.get<Booking>(`${this.API_URL}/${bookingId}`, { headers , responseType: 'json' as const})
+      );
+      
+      console.log('Booking retrieved:', response);
+      return response;
+    } catch (error: any) {
+      console.error('Failed to get booking:', error);
+      throw this.handleError(error);
+    }
+  }
+  
+  
   /**
    * Update booking status
    */
