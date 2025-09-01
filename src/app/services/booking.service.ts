@@ -36,21 +36,23 @@ export interface BookingResponse {
 }
 
 export interface Booking {
-  bookingId: string;
-  customerId: number;
-  receiver_name: string;
+  bookingId: number;
+  name: string;
+  address: string;
+  phoneNumber: string;
+  receiverName: string;
   receiverAddress: string;
-  receiver_pin: number;
-  receiver_phone_number: string;
-  parcel_weight_grams: number;
-  parcel_content_desc: string;
-  parcel_delivery_type: string;
-  parcel_packing_preference: string;
-  parcel_pickup_time: string;
-  parcel_drop_time: string;
+  receiverPin: number;
+  receiverPhoneNumber: string;
+  parcelWeightInGrams: number;
+  parcelContentDesc: string;
+  parcelDeliveryType: string;
+  parcelPackingPreference: string;
+  parcelPickUpTime: string;
+  parcelDropTime: string;
   serviceCost: number;
-  status: string;
-  bookingDate: string;
+  parcelPaymentTime: string;
+  bookingStatus: string;
 }
 
 @Injectable({

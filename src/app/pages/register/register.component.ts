@@ -52,11 +52,18 @@ import { AuthService } from '../../services/auth.service';
                   name="email"
                   type="email"
                   [(ngModel)]="registerData.email"
+                  (blur)="validateEmailField()"
                   required
                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  [class.border-red-300]="emailError()"
+                  [class.focus:ring-red-500]="emailError()"
+                  [class.focus:border-red-500]="emailError()"
                   placeholder="Enter your email address"
                 />
               </div>
+              @if (emailError()) {
+                <p class="mt-2 text-sm text-red-600">{{ emailError() }}</p>
+              }
             </div>
 
             <!-- Mobile Number with Country Code -->
@@ -81,10 +88,15 @@ import { AuthService } from '../../services/auth.service';
                   type="tel"
                   [(ngModel)]="registerData.mobile_number"
                   required
+                  [class.border-red-300]="phoneError()"
+                  (blur)="validatePhoneField()"
                   class="flex-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-r-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Enter mobile number"
                 />
               </div>
+              @if (phoneError()) {
+                <p class="mt-1 text-sm text-red-600">{{ phoneError() }}</p>
+              }
             </div>
 
             <!-- Address -->
@@ -117,6 +129,8 @@ import { AuthService } from '../../services/auth.service';
                   [type]="showPassword() ? 'text' : 'password'"
                   [(ngModel)]="registerData.password"
                   required
+                  [class.border-red-300]="passwordError()"
+                  (blur)="validatePasswordField()"
                   class="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Create a strong password"
                 />
@@ -135,6 +149,9 @@ import { AuthService } from '../../services/auth.service';
                   </svg>
                 </button>
               </div>
+              @if (passwordError()) {
+                <p class="mt-1 text-sm text-red-600">{{ passwordError() }}</p>
+              }
             </div>
 
             <!-- Confirm Password -->
@@ -149,6 +166,8 @@ import { AuthService } from '../../services/auth.service';
                   [type]="showConfirmPassword() ? 'text' : 'password'"
                   [(ngModel)]="registerData.confirmPassword"
                   required
+                  [class.border-red-300]="confirmPasswordError()"
+                  (blur)="validateConfirmPasswordField()"
                   class="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Confirm your password"
                 />
@@ -167,6 +186,9 @@ import { AuthService } from '../../services/auth.service';
                   </svg>
                 </button>
               </div>
+              @if (confirmPasswordError()) {
+                <p class="mt-1 text-sm text-red-600">{{ confirmPasswordError() }}</p>
+              }
             </div>
 
             <!-- Customer Preferences -->
@@ -334,6 +356,12 @@ export class RegisterComponent {
   isLoading = signal(false);
   errorMessage = signal('');
 
+  // Validation error signals
+  emailError = signal('');
+  phoneError = signal('');
+  passwordError = signal('');
+  confirmPasswordError = signal('');
+
   constructor(private router: Router, private authService: AuthService) {}
 
   togglePasswordVisibility() {
@@ -344,25 +372,121 @@ export class RegisterComponent {
     this.showConfirmPassword.set(!this.showConfirmPassword());
   }
 
+  // Field-specific validation methods
+  validateEmailField(): void {
+    if (!this.registerData.email) {
+      this.emailError.set('Email is required');
+    } else if (!this.validateEmail(this.registerData.email)) {
+      this.emailError.set('Please enter a valid email address');
+    } else {
+      this.emailError.set('');
+    }
+  }
+
+  validatePhoneField(): void {
+    if (!this.registerData.mobile_number) {
+      this.phoneError.set('Phone number is required');
+    } else if (!this.validatePhoneNumber(this.registerData.mobile_number)) {
+      this.phoneError.set('Phone number must be exactly 10 digits');
+    } else {
+      this.phoneError.set('');
+    }
+  }
+
+  validatePasswordField(): void {
+    if (!this.registerData.password) {
+      this.passwordError.set('Password is required');
+    } else if (!this.validatePassword(this.registerData.password)) {
+      this.passwordError.set('Password must be at least 7 characters with uppercase, lowercase, and special character');
+    } else {
+      this.passwordError.set('');
+    }
+  }
+
+  validateConfirmPasswordField(): void {
+    if (!this.registerData.confirmPassword) {
+      this.confirmPasswordError.set('Please confirm your password');
+    } else if (this.registerData.password !== this.registerData.confirmPassword) {
+      this.confirmPasswordError.set('Passwords do not match');
+    } else {
+      this.confirmPasswordError.set('');
+    }
+  }
+
+  // Validation methods
+  validateEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  validatePhoneNumber(phoneNumber: string): boolean {
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(phoneNumber);
+  }
+
+  validatePassword(password: string): boolean {
+    if (password.length < 7) {
+      return false;
+    }
+
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return hasUpperCase && hasLowerCase && hasSpecialChar;
+  }
+
+  validateForm(): { isValid: boolean; message: string } {
+    // Validate all required fields are filled
+    if (!this.registerData.customer_name?.trim()) {
+      return { isValid: false, message: 'Customer name is required' };
+    }
+
+    // Validate email
+    if (!this.validateEmail(this.registerData.email)) {
+      return { isValid: false, message: 'Please enter a valid email address' };
+    }
+
+    // Validate phone number
+    if (!this.validatePhoneNumber(this.registerData.mobile_number)) {
+      return { isValid: false, message: 'Phone number must be exactly 10 digits' };
+    }
+
+    // Validate address
+    if (!this.registerData.address?.trim()) {
+      return { isValid: false, message: 'Address is required' };
+    }
+
+    // Validate password
+    if (!this.validatePassword(this.registerData.password)) {
+      return { isValid: false, message: 'Password must be at least 7 characters with uppercase, lowercase, and special character' };
+    }
+
+    // Validate confirm password
+    if (!this.registerData.confirmPassword) {
+      return { isValid: false, message: 'Please confirm your password' };
+    }
+
+    if (this.registerData.password !== this.registerData.confirmPassword) {
+      return { isValid: false, message: 'Passwords do not match' };
+    }
+
+    // Validate terms agreement
+    if (!this.registerData.agreeTerms) {
+      return { isValid: false, message: 'Please agree to the terms and conditions' };
+    }
+
+    return { isValid: true, message: '' };
+  }
+
   async onRegister() {
     this.showError.set(true);
     this.errorMessage.set('');
 
-    // Validate form
-    if (!this.registerData.customer_name || !this.registerData.email || 
-        !this.registerData.mobile_number || !this.registerData.address ||
-        !this.registerData.password || !this.registerData.confirmPassword) {
-      this.errorMessage.set('Please fill in all required fields');
-      return;
-    }
-
-    if (this.registerData.password !== this.registerData.confirmPassword) {
-      this.errorMessage.set('Passwords do not match');
-      return;
-    }
-
-    if (!this.registerData.agreeTerms) {
-      this.errorMessage.set('Please agree to the terms and conditions');
+    // Validate form using comprehensive validation
+    const validation = this.validateForm();
+    if (!validation.isValid) {
+      this.errorMessage.set(validation.message);
       return;
     }
 
