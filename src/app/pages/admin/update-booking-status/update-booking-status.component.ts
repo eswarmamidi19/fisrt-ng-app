@@ -147,13 +147,10 @@ import { BookingService, Booking } from '../../../services/booking.service';
                           [(ngModel)]="booking.newStatus"
                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                           <option value="">Select Status</option>
-                          <option value="BOOKED">BOOKED</option>
-                          <option value="CONFIRMED">CONFIRMED</option>
-                          <option value="PICKED_UP">PICKED UP</option>
-                          <option value="IN_TRANSIT">IN TRANSIT</option>
-                          <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
-                          <option value="DELIVERED">DELIVERED</option>
-                          <option value="CANCELLED">CANCELLED</option>
+                          <option value="Booked">Booked</option>
+                          <option value="Intransit">Intransit</option>
+                          <option value="Delivered">Delivered</option>
+                          <option value="Cancelled">Cancelled</option>
                         </select>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -294,19 +291,26 @@ export class UpdateBookingStatusComponent {
   }
 
   getStatusClass(status: string): string {
-    switch (status?.toUpperCase()) {
-      case 'BOOKED':
-      case 'CONFIRMED':
+    switch (status?.toLowerCase()) {
+      case 'booked':
         return 'bg-blue-100 text-blue-800';
-      case 'PICKED_UP':
-      case 'IN_TRANSIT':
+      case 'intransit':
         return 'bg-yellow-100 text-yellow-800';
-      case 'OUT_FOR_DELIVERY':
-        return 'bg-orange-100 text-orange-800';
-      case 'DELIVERED':
+      case 'delivered':
         return 'bg-green-100 text-green-800';
-      case 'CANCELLED':
+      case 'cancelled':
         return 'bg-red-100 text-red-800';
+      // Handle legacy statuses if they still exist
+      case 'confirmed':
+        return 'bg-blue-100 text-blue-800';
+      case 'picked_up':
+      case 'picked up':
+      case 'in_transit':
+      case 'in transit':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'out_for_delivery':
+      case 'out for delivery':
+        return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }

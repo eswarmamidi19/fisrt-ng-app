@@ -196,7 +196,10 @@ export class BookingService {
       const headers = this.authService.getAuthHeader();
       
       const response = await firstValueFrom(
-        this.http.put<Booking>(`${this.API_URL}/${bookingId}/status`, { status }, { headers })
+        this.http.post<Booking>(`${this.API_URL}/admin/update-status/${bookingId}`, 
+          { user_status: status }, 
+          { headers }
+        )
       );
       
       console.log('Booking status updated:', response);

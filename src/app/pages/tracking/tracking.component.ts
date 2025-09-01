@@ -265,18 +265,24 @@ export class TrackingComponent {
   }
 
   getStatusClass(status: string): string {
-    switch (status?.toUpperCase()) {
-      case 'BOOKED':
-      case 'CONFIRMED':
+    switch (status?.toLowerCase()) {
+      case 'booked':
         return 'bg-blue-100 text-blue-800';
-      case 'IN PROGRESS':
-      case 'PICKED UP':
+      case 'intransit':
         return 'bg-yellow-100 text-yellow-800';
-      case 'DELIVERED':
-      case 'COMPLETED':
+      case 'delivered':
         return 'bg-green-100 text-green-800';
-      case 'CANCELLED':
+      case 'cancelled':
         return 'bg-red-100 text-red-800';
+      // Handle legacy statuses if they still exist
+      case 'confirmed':
+        return 'bg-blue-100 text-blue-800';
+      case 'in progress':
+      case 'picked up':
+      case 'in transit':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
