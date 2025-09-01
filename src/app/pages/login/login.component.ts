@@ -1,6 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -22,6 +22,26 @@ import { AuthService } from '../../services/auth.service';
 
       <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          
+          <!-- Registration Success Message -->
+          @if (showRegistrationSuccess()) {
+            <div class="mb-6 bg-green-50 border border-green-200 rounded-md p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-green-800">Registration Successful!</h3>
+                  <div class="mt-2 text-sm text-green-700">
+                    <p>Your account has been created successfully. Please use your User ID and password to log in.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
           <form class="space-y-6" (ngSubmit)="onLogin()" #loginForm="ngForm">
             <!-- User ID Input -->
             <div>
@@ -171,7 +191,7 @@ import { AuthService } from '../../services/auth.service';
     </div>
   `
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   // Form data
   loginData = {
     userId: 0,
@@ -184,8 +204,24 @@ export class LoginComponent {
   showError = signal(false);
   isLoading = signal(false);
   errorMessage = signal('');
+  showRegistrationSuccess = signal(false);
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(private router: Router, private authService: AuthService, private route: ActivatedRoute) {}
+
+  ngOnInit() {
+    // Check for userId from query parameters (from registration success)
+    this.route.queryParams.subscribe(params => {
+      if (params['userId']) {
+        this.loginData.userId = parseInt(params['userId'], 10);
+        this.showRegistrationSuccess.set(true);
+        
+        // Hide success message after 10 seconds
+        setTimeout(() => {
+          this.showRegistrationSuccess.set(false);
+        }, 10000);
+      }
+    });
+  }
 
   togglePasswordVisibility() {
     this.showPassword.set(!this.showPassword());

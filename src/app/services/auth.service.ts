@@ -34,6 +34,20 @@ export interface LoginResponse {
   token?: string;
 }
 
+export interface RegisterResponse {
+  userId: number;
+  customerName: string;
+  customerEmail: string;
+  customerMobileNumber: string;
+  customerAddress: string;
+  customerPreferences: string;
+  role: string;
+  countryCode: string;
+  password: string;
+  bookings: any[];
+  message?: string;
+}
+
 export interface RegisterData {
   customer_name: string;
   email: string;
@@ -167,7 +181,7 @@ export class AuthService {
     }
   }
 
-  async register(userData: RegisterData): Promise<boolean> {
+  async register(userData: RegisterData): Promise<RegisterResponse | null> {
   
      try {
        const registrationRequest  : RegisterData  =  {
@@ -186,22 +200,22 @@ export class AuthService {
        });
 
        const httpResponse =  await firstValueFrom(
-        this.http.post(`${this.API_URL}/auth/register`, registrationRequest, { 
+        this.http.post<RegisterResponse>(`${this.API_URL}/auth/register`, registrationRequest, { 
           headers,
           observe: 'response'
         })
       );
 
-      if (httpResponse.status === 200) {
+      if (httpResponse.status === 200 && httpResponse.body) {
         console.log('User registered successfully:', httpResponse.body);
-        return true;
+        return httpResponse.body;
       } else {
         console.error('Registration failed:', httpResponse);
-        return false;
+        return null;
       }
     } catch (error: any) {
       console.error('Registration error:', error);
-      return false;
+      return null;
     }
   }
 

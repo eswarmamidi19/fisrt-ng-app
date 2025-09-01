@@ -18,6 +18,10 @@ export const routes: Routes = [
     canActivate: [loginGuard]
   },
   {
+    path: 'registration-success',
+    loadComponent: () => import('./pages/register/registration-acknowledgment.component').then(m => m.RegistrationAcknowledgmentComponent)
+  },
+  {
     path: 'booking',
     loadComponent: () => import('./pages/booking/booking.component').then(m => m.BookingComponent),
     canActivate: [authGuard]

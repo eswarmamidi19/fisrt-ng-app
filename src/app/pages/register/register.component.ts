@@ -369,15 +369,26 @@ export class RegisterComponent {
     this.isLoading.set(true);
 
     try {
-      const success = await this.authService.register(this.registerData);
+      const registrationResponse = await this.authService.register(this.registerData);
       
-      if (success) {
-        // Navigate to login page with success message
-        this.router.navigate(['/login']);
+      if (registrationResponse) {
+        // Navigate to acknowledgment page with user data
+        this.router.navigate(['/registration-success'], {
+          queryParams: {
+            userId: registrationResponse.userId.toString(),
+            userInfo: encodeURIComponent(JSON.stringify({
+              customerName: registrationResponse.customerName,
+              customerEmail: registrationResponse.customerEmail,
+              customerMobileNumber: registrationResponse.customerMobileNumber,
+              countryCode: registrationResponse.countryCode
+            }))
+          }
+        });
       } else {
         this.errorMessage.set('Registration failed. Please try again.');
       }
     } catch (error) {
+      console.error('Registration error:', error);
       this.errorMessage.set('Registration failed. Please try again.');
     } finally {
       this.isLoading.set(false);
