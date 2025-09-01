@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { loginGuard } from './guards/login.guard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -43,6 +44,16 @@ export const routes: Routes = [
   {
     path: 'about',
     loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent)
+  },
+  {
+    path: 'admin/update-booking-status',
+    loadComponent: () => import('./pages/admin/update-booking-status/update-booking-status.component').then(m => m.UpdateBookingStatusComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'admin/update-pickup-dates',
+    loadComponent: () => import('./pages/admin/update-pickup-dates/update-pickup-dates.component').then(m => m.UpdatePickupDatesComponent),
+    canActivate: [adminGuard]
   },
   {
     path: '**',

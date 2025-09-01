@@ -265,6 +265,12 @@ export class AuthService {
     return this._currentUser();
   }
 
+  // Check if current user is admin
+  isAdmin(): boolean {
+    const user = this._currentUser();
+    return user?.role?.toLowerCase() === 'admin';
+  }
+
   // Get current auth token
   getToken(): string | null {
     return this._authToken();

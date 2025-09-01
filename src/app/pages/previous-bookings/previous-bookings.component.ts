@@ -30,7 +30,13 @@ interface UserBooking {
   template: `
     <div class="min-h-screen bg-gray-50 py-8">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-6">Previous Parcel Bookings</h1>
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">
+          @if (authService.isAdmin()) {
+            All Users' Parcel Bookings (Admin View)
+          } @else {
+            Previous Parcel Bookings
+          }
+        </h1>
         
         <!-- Filter Bar -->
         <div class="bg-white rounded-lg shadow-md p-4 mb-6">
@@ -83,13 +89,27 @@ interface UserBooking {
               Showing {{ filteredBookings().length }} of {{ previousBookings().length }} bookings
             </div>
           }
+          
+          <!-- Admin info -->
+          @if (authService.isAdmin() && previousBookings().length > 0) {
+            <div class="mt-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md">
+              <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Admin View: Displaying bookings from all users
+            </div>
+          }
         </div>
 
         <!-- Bookings List -->
         @if (isLoading()) {
           <div class="text-center py-12">
             <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-gray-600">Loading your bookings...</p>
+            @if (authService.isAdmin()) {
+              <p class="text-gray-600">Loading all users' bookings...</p>
+            } @else {
+              <p class="text-gray-600">Loading your bookings...</p>
+            }
           </div>
         } @else if (errorMessage()) {
           <div class="text-center py-12">
@@ -113,11 +133,18 @@ interface UserBooking {
                 
                 <!-- Left Column: Booking Details -->
                 <div class="lg:col-span-2">
-                  <div class="flex items-center space-x-2 mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Parcel Delivery</h3>
-                    <span [class]="getStatusClass(booking.bookingStatus)" class="px-3 py-1 rounded-full text-xs font-medium">
-                      {{ booking.bookingStatus }}
-                    </span>
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                      <h3 class="text-lg font-semibold text-gray-900">Parcel Delivery</h3>
+                      <span [class]="getStatusClass(booking.bookingStatus)" class="px-3 py-1 rounded-full text-xs font-medium">
+                        {{ booking.bookingStatus }}
+                      </span>
+                    </div>
+                    @if (authService.isAdmin()) {
+                      <div class="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                        User: {{ booking.name }}
+                      </div>
+                    }
                   </div>
                   
                   <div class="grid md:grid-cols-2 gap-4">
@@ -248,7 +275,7 @@ export class PreviousBookingsComponent implements OnInit {
 
   private readonly API_URL = 'http://localhost:8080/api/booking';
 
-  constructor(private authService: AuthService, private bookingService: BookingService) {}
+  constructor(public authService: AuthService, private bookingService: BookingService) {}
 
   ngOnInit() {
     this.loadBookings();
@@ -269,8 +296,15 @@ export class PreviousBookingsComponent implements OnInit {
 
       console.log('Fetching bookings from API...');
       
-      // Fetch bookings using the booking service
-      const response = await this.bookingService.getUserBookings();
+      // Use different endpoints based on user role
+      let response;
+      if (this.authService.isAdmin()) {
+        console.log('Loading all bookings for admin...');
+        response = await this.bookingService.getAllBookings();
+      } else {
+        console.log('Loading user bookings...');
+        response = await this.bookingService.getUserBookings();
+      }
 
       console.log('API Response:', response);
 

@@ -121,6 +121,32 @@ export class BookingService {
   }
 
   /**
+   * Get all bookings for admin (all users)
+   */
+  async getAllBookings(): Promise<Booking[]> {
+    try {
+     const headers = new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': localStorage.getItem('authToken') || '',
+      });
+      
+      const response = await firstValueFrom(
+        this.http.get<Booking[]>(`http://localhost:8080/api/bookings/all_bookings`, { 
+          headers,
+          responseType: 'json' as const
+        })
+      );
+      
+      console.log('All bookings retrieved:', response);
+      return response;
+    } catch (error: any) {
+      console.error('Failed to get all bookings:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
    * Get booking by ID
    */
   async getBookingById(bookingId: string): Promise<Booking> {
@@ -196,6 +222,35 @@ export class BookingService {
       return response;
     } catch (error: any) {
       console.error('Failed to cancel booking:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Update booking pickup and drop dates
+   */
+  async updateBookingDates(bookingId: string, pickupTime: string, dropTime: string): Promise<Booking> {
+    try {
+      const headers = new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': localStorage.getItem('authToken') || '',
+      });
+      
+      const response = await firstValueFrom(
+        this.http.put<Booking>(`${this.API_URL}/${bookingId}/dates`, 
+          { 
+            parcelPickUpTime: pickupTime,
+            parcelDropTime: dropTime 
+          }, 
+          { headers, responseType: 'json' as const }
+        )
+      );
+      
+      console.log('Booking dates updated:', response);
+      return response;
+    } catch (error: any) {
+      console.error('Failed to update booking dates:', error);
       throw this.handleError(error);
     }
   }
